@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+/* ============================================================
+   "Network Lab" design language — the third distinct visual
+   identity in this workspace. Different on every axis from both
+   siblings: light-first (like Adaptive Stochastic Graph) but a
+   cool indigo/cyan palette (not warm blue/orange); a monospace
+   technical display face (not system-ui, not Bebas Neue); a
+   top underline-tab nav (not a pill row, not an icon rail);
+   hexagonal node badges and a graph-paper dot-grid texture
+   instead of ticket-stub cards or rounded pills.
+   ============================================================ */
+
+:root {
+  --font-display: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-body: "IBM Plex Sans", "Inter", system-ui, sans-serif;
+}
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --surface-0: #f6f7fb;
+  --surface-1: #ffffff;
+  --surface-2: #eef0f7;
+  --surface-3: #e3e6f0;
+  --text-primary: #161a2b;
+  --text-secondary: #4c5270;
+  --text-muted: #8b90a8;
+  --gridline: #e1e4ee;
+  --baseline: #c9cde0;
+  --border: rgba(22, 26, 43, 0.1);
+
+  --series-1: #5b3df5;   /* indigo */
+  --series-2: #0891b2;   /* cyan */
+  --series-3: #e0781f;   /* amber */
+  --series-4: #0c9d61;   /* green */
+  --series-5: #d6336c;   /* magenta */
+  --series-6: #2563eb;   /* blue */
+  --series-7: #7c3aed;   /* violet */
+  --series-8: #c0392b;   /* red */
+
+  --status-good: #0c9d61;
+  --status-warning: #c9870c;
+  --status-serious: #d1671a;
+  --status-critical: #c0392b;
+
+  --accent: #5b3df5;
+  --accent-2: #0891b2;
+  --accent-contrast: #ffffff;
+  --surface-hover: rgba(22, 26, 43, 0.04);
+  --surface-active: rgba(22, 26, 43, 0.08);
+  --shadow-sm: 0 1px 2px rgba(22, 26, 43, 0.08);
+  --shadow-md: 0 10px 26px rgba(22, 26, 43, 0.1);
+
+  /* Fixed per-method identity, used consistently across charts/badges. */
+  --m-mostpop: var(--baseline);
+  --m-itemknn: var(--series-3);
+  --m-bprmf: var(--series-6);
+  --m-lightgcn: var(--series-4);
+  --m-cgnf: var(--series-1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-0: #0c0e17;
+    --surface-1: #141826;
+    --surface-2: #1b2033;
+    --surface-3: #242a42;
+    --text-primary: #eef0fa;
+    --text-secondary: #a8aecb;
+    --text-muted: #6b7093;
+    --gridline: #262c45;
+    --baseline: #343a58;
+    --border: rgba(238, 240, 250, 0.1);
+
+    --series-1: #8d79ff;
+    --series-2: #22b8d8;
+    --series-3: #f0923a;
+    --series-4: #2ec080;
+    --series-5: #ec6ba0;
+    --series-6: #5b8cf0;
+    --series-7: #a07aff;
+    --series-8: #e2685c;
+
+    --status-good: #2ec080;
+    --status-warning: #e0a830;
+    --status-serious: #e2854a;
+    --status-critical: #e2685c;
+
+    --accent: #8d79ff;
+    --accent-2: #22b8d8;
+    --surface-hover: rgba(238, 240, 250, 0.06);
+    --surface-active: rgba(238, 240, 250, 0.1);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.5);
+
+    --m-mostpop: var(--baseline);
+    --m-itemknn: var(--series-3);
+    --m-bprmf: var(--series-6);
+    --m-lightgcn: var(--series-4);
+    --m-cgnf: var(--series-1);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-0: #0c0e17;
+  --surface-1: #141826;
+  --surface-2: #1b2033;
+  --surface-3: #242a42;
+  --text-primary: #eef0fa;
+  --text-secondary: #a8aecb;
+  --text-muted: #6b7093;
+  --gridline: #262c45;
+  --baseline: #343a58;
+  --border: rgba(238, 240, 250, 0.1);
+
+  --series-1: #8d79ff;
+  --series-2: #22b8d8;
+  --series-3: #f0923a;
+  --series-4: #2ec080;
+  --series-5: #ec6ba0;
+  --series-6: #5b8cf0;
+  --series-7: #a07aff;
+  --series-8: #e2685c;
+
+  --status-good: #2ec080;
+  --status-warning: #e0a830;
+  --status-serious: #e2854a;
+  --status-critical: #e2685c;
+
+  --accent: #8d79ff;
+  --accent-2: #22b8d8;
+  --surface-hover: rgba(238, 240, 250, 0.06);
+  --surface-active: rgba(238, 240, 250, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.5);
+
+  --m-mostpop: var(--baseline);
+  --m-itemknn: var(--series-3);
+  --m-bprmf: var(--series-6);
+  --m-lightgcn: var(--series-4);
+  --m-cgnf: var(--series-1);
+}
+
+body {
+  background-color: var(--surface-0);
+  background-image: radial-gradient(var(--gridline) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.mono { font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.5rem 0.95rem;
+  border-radius: 0.35rem;
+  transition: background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--surface-3); }
+
+.btn-ghost { color: var(--text-secondary); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-hover); }
+
+.field-input {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color 120ms ease;
+  width: 100%;
+}
+.field-input:focus-visible { border-color: var(--accent); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.3rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.hover-card {
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+.hover-card:hover { background: var(--surface-hover); }
+
+.progress-track {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gridline);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 300ms ease;
+}
+
+input[type="range"] { accent-color: var(--accent); }
+
+/* --- hexagonal node badge: this app's one signature motif --- */
+.node-badge {
+  width: 2.1rem;
+  height: 2.4rem;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- top nav: underline tabs, not a pill row --- */
+.tab-link {
+  position: relative;
+  padding: 0.85rem 0.2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.tab-link:hover { color: var(--text-primary); }
+.tab-link.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}

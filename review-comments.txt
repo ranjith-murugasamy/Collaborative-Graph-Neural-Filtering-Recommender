@@ -1,0 +1,515 @@
+================================================================================
+CGNF RECOMMENDER -- POINT-BY-POINT RESPONSE TO REVIEWER 1 AND REVIEWER 2
+================================================================================
+
+Manuscript:        "Enhancing Recommendation Systems through Novel
+                    Collaborative Graph Neural Filtering Approach" (Paper 20265754)
+Prepared from:      the accompanying reproducible implementation in cgnf-recommender/
+                    (Python/Flask backend, React/Tailwind frontend)
+Evaluation dataset: MovieLens 1M -- 6,040 users, 3,883 movies, 1,000,209 ratings
+Real run id:        5ab5fa5a70
+Prepared:           2026-10-04
+
+--------------------------------------------------------------------------------
+HOW TO READ THIS DOCUMENT
+--------------------------------------------------------------------------------
+Every comment from both reviewer rounds is quoted verbatim, then given an
+explicit status and a concrete implementation approach -- what was actually
+built, in which file, with what real measured result from a real training run.
+Nothing below is claimed as done unless it is backed by a working feature or a
+real number; genuine gaps are labeled as gaps, not hidden.
+
+  [IMPLEMENTED]            a working, verifiable feature in the application
+  [PARTIALLY IMPLEMENTED]  part of the request is built; the rest is named
+                           explicitly as a gap
+  [OUT OF SCOPE]           a manuscript-writing task with no corresponding code
+                           feature, or genuine future work -- named honestly
+                           rather than silently skipped
+
+--------------------------------------------------------------------------------
+SUMMARY TABLE
+--------------------------------------------------------------------------------
+  #       Comment                                          Status
+  ------  ------------------------------------------------ -----------------------
+  R1.1    Mathematical formulation                          IMPLEMENTED
+  R1.2    Experimental setup                                 IMPLEMENTED
+  R1.3    Baseline comparison incl. recent graph methods     IMPLEMENTED
+  R1.4    Diversity evaluation                                IMPLEMENTED
+  R1.5-9  5 internal numeric inconsistencies                 IMPLEMENTED (resolved
+                                                               by replacement, not
+                                                               arbitration)
+  R1.10   Efficiency / edge-reduction proof                   IMPLEMENTED
+  R1.11   Ablation study                                     IMPLEMENTED
+  R1.12   Reproducibility                                    IMPLEMENTED
+  R2.1    Novelty                                            PARTIALLY IMPLEMENTED
+  R2.2    Superiority / fairness                              IMPLEMENTED
+  R2.3    Ablation study                                     IMPLEMENTED
+  R2.4    Diversity claim                                     IMPLEMENTED
+  R2.5    Statistical validation                              IMPLEMENTED
+  R2.6    Result consistency                                 IMPLEMENTED
+  R2.7    Generalization & sensitivity                        IMPLEMENTED
+  R2.8    References & related work                           OUT OF SCOPE
+
+
+================================================================================
+REVIEWER 1
+================================================================================
+
+--------------------------------------------------------------------------------
+[R1.1] Mathematical Formulation
+--------------------------------------------------------------------------------
+COMMENT:
+  "Clearly define all equations, variables, graph construction, community
+  detection, edge reduction, and training procedure."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  No runnable reference implementation of CGNF exists -- only the paper's
+  equations (1)-(17) and three pseudocode algorithms, several with OCR-garbled
+  or reused subscripts. Rather than reproduce that ambiguity, backend/app/
+  graph.py and backend/app/edge_reduction.py implement one concrete, documented
+  reading of each equation, function by function:
+
+  - Eq. (1)-(2): bipartite modularity in the style of Barber (2007) -- observed
+    link weight minus a degree-product null-model term, summed over
+    same-community node pairs.
+  - Eq. (3): ratings row-normalized per user, thresholded into "strong"
+    (saturates to 1.0) vs. "weak" (kept fractional) links -- CGNF's one
+    genuinely custom weighting step.
+  - Eq. (4)-(11), Algorithm 1: community assignment via bipartite spectral
+    co-clustering (Dhillon, 2001) -- the top-(H-1) singular vectors of the
+    normalized bipartite link matrix embed users and items into a shared
+    space, k-means'd into H communities. An initial literal reading of
+    Eq.(15)-(17) as an alternating power-iteration update was tried first and
+    found, via this project's own multi-seed validation feature, to collapse
+    to a single community regardless of H -- see "Issues found independently"
+    below.
+  - Eq. (12)-(14): the modularity score (blending a local hard-assignment term
+    and a global membership-confidence term) used to pick the community count H.
+  - Algorithm 2 (edge reduction): vectorized subset-redundancy removal within
+    each community, not a literal RL-wide pairwise loop.
+  - Algorithm 3 (recommendation): community-scoped, similarity-weighted
+    neighbor aggregation.
+
+  One honest, named deviation: the paper's own H_max = (|V|*|L|)^0.5 bound
+  evaluates to approx. 4,700 at MovieLens-1M's training-graph scale --
+  exhaustively sweeping that many community counts is not tractable in
+  minutes on CPU. This implementation sweeps a practical grid
+  ([4,8,12,16,24,32,48,64]) instead and documents the gap explicitly
+  (specs/spec.md section 2) rather than silently using a different bound
+  without saying so.
+
+--------------------------------------------------------------------------------
+[R1.2] Experimental Setup
+--------------------------------------------------------------------------------
+COMMENT:
+  "Clearly specify datasets, preprocessing, data splits, negative sampling,
+  evaluation method, hyperparameters, and random seeds."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Every item is explicit, editable in the Train form, and recorded with every
+  run:
+  - Dataset: MovieLens 1M -- 6,040 users, 3,883 movies, 1,000,209 ratings.
+  - Preprocessing/split: per-user, time-ordered leave-k-out (k=1 default);
+    users with <= min_interactions stay entirely in train.
+  - Negative sampling: used in BPR-MF's and LightGCN's training loss (uniform
+    random negatives, resampled per batch) -- not at evaluation time, where
+    candidates are the full remaining catalog.
+  - Evaluation method: Recall@K / NDCG@K, K in {20,50}, per held-out user,
+    averaged only over users with >=1 relevant held-out item (3,563 of 6,040).
+  - Hyperparameters: every field in backend/app/runner.py's DEFAULTS is a
+    visible Train-form input, not a hidden constant.
+  - Random seed: an explicit seed field (default 0) on every run config.
+
+--------------------------------------------------------------------------------
+[R1.3] Baseline Comparison (incl. recent graph-based methods)
+--------------------------------------------------------------------------------
+COMMENT:
+  "Ensure a fair comparison using the same protocol and include recent
+  graph-based recommendation methods."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  All 5 methods -- MostPopular, Item-kNN, BPR-MF, LightGCN, and CGNF -- train
+  on the identical split and are scored through the identical metrics.py
+  evaluation function; no method gets a different protocol. LightGCN
+  (He et al., 2020) is the specific recent graph-based method both reviewers
+  name.
+
+  REAL RESULT, this run (NDCG@20 / Recall@20 / NDCG@50 / Recall@50):
+
+    Method              NDCG@20   Recall@20   NDCG@50   Recall@50
+    ------------------  --------  ----------  --------  ----------
+    MostPopular          0.0328    0.0898      0.0504    0.1791
+    Item-kNN              0.0628    0.1502      0.0864    0.2697
+    BPR-MF                0.0406    0.1081      0.0610    0.2116
+    LightGCN               0.0510    0.1257      0.0743    0.2439
+    CGNF (proposed)         0.0707    0.1726      0.0953    0.2975
+
+  CGNF outperforms the strongest baseline (Item-kNN) by +12.6% NDCG@20,
+  +15.0% Recall@20, +10.4% NDCG@50, +10.3% Recall@50 -- a real, unforced
+  result from an honest held-out protocol, not a single-user example.
+
+--------------------------------------------------------------------------------
+[R1.4] Diversity Evaluation
+--------------------------------------------------------------------------------
+COMMENT:
+  "Recall and NDCG measure accuracy, not diversity. Add diversity metrics
+  such as coverage, novelty, and intra-list diversity, or reduce the
+  diversity claim."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  backend/app/diversity.py computes all three requested metrics for every
+  method:
+
+    Method              Coverage   Novelty   Intra-list diversity
+    ------------------  ---------  --------  ---------------------
+    MostPopular           5.9%      8.77       0.718
+    Item-kNN               17.7%     9.18       0.671
+    BPR-MF                  69.7%     10.38      0.639
+    LightGCN                 23.8%     9.25       0.667
+    CGNF (proposed)           24.5%     9.44       0.666
+
+  The honest, non-obvious finding: BPR-MF has by far the HIGHEST catalog
+  coverage (69.7% vs. CGNF's 24.5%) despite being a weaker accuracy
+  performer -- i.e. accuracy and catalog coverage trade off against each
+  other here, and CGNF does not win on every axis. This is reported as
+  measured, not smoothed over.
+
+--------------------------------------------------------------------------------
+[R1.5-9] Internal Numeric Inconsistencies
+         (Amazon Recall@50, MovieLens Recall@20/@50, NDCG dataset labeling,
+          improvement-% formula)
+--------------------------------------------------------------------------------
+COMMENT:
+  "Amazon Recall@50: 22.67 (Table 2) vs. 21.84 (text). MovieLens Recall@20:
+  mismatched baseline values/names. MovieLens Recall@50: 47.05 / 49.85 /
+  49.86 in different sections. NDCG tables/figures say MovieLens while the
+  text says Amazon. Table 7's improvement percentages don't match
+  (new-old)/old."
+
+STATUS: IMPLEMENTED (resolved by replacement, not arbitration)
+
+APPROACH:
+  There is no way to know which of 22.67/21.84, or which of
+  47.05/49.85/49.86, the original authors actually measured, and guessing
+  would just add a sixth number to the pile. This implementation does not
+  touch the paper's numbers at all: it reproduces CGNF and every baseline
+  from scratch, on one documented protocol, and reports exactly one number
+  per metric -- see the real-results table above. Because only MovieLens is
+  evaluated here (see R2.8 / out-of-scope below), the "NDCG says MovieLens
+  but the text says Amazon" confusion specifically cannot recur: there is
+  only one dataset.
+
+  Improvement percentages (the finding above -- +12.6% / +15.0% / +10.4% /
+  +10.3%) are computed programmatically as (cgnf - baseline) / baseline * 100
+  directly from the run's own numbers, not hand-typed into a table
+  afterward.
+
+--------------------------------------------------------------------------------
+[R1.10] Efficiency / Edge Reduction
+--------------------------------------------------------------------------------
+COMMENT:
+  "Prove the efficiency claim using edge count, runtime, memory, and
+  computational cost before and after edge reduction."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Measured, not asserted. This run: edge reduction removed 7,115 of 994,169
+  edges (0.72%), and took 10.6s with reduction vs. 9.8s without (wall-clock,
+  full H-sweep + reduction step).
+
+  HONEST CAVEAT: the edge-count reduction at this dataset's scale is modest
+  (0.7%, not a dramatic fraction), and reduction adds wall-clock time in
+  this implementation rather than saving it -- the "boosts computational
+  efficiency" claim in the original abstract does not hold for this
+  reproduction at this scale, at least not for the redundancy criterion as
+  specified in Algorithm 2 (near-subset item sets are simply uncommon in a
+  sparse, mostly-distinct-taste real dataset). This is reported as measured,
+  not adjusted to match the original claim.
+
+--------------------------------------------------------------------------------
+[R1.11] Ablation Study
+--------------------------------------------------------------------------------
+COMMENT:
+  "Test the individual contribution of modularity, community detection,
+  edge clustering/reduction, and GNN/NCF components."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  CGNF's own internal pipeline -- weighted modularity (Eq. 3-4) and edge
+  reduction (Algorithm 2) -- is independently toggleable from one shared
+  cgnf.fit() function (not four separately-maintained code paths), producing
+  a real 4-way ablation:
+
+    Configuration                        NDCG@20   Recall@20   Edges kept/before
+    ------------------------------------ --------  ----------  ------------------
+    CGNF - both (plain community CF)      0.0677    0.1622      994,169 / 994,169
+    CGNF - weighted modularity              0.0676    0.1631      986,505 / 994,169
+    CGNF - edge reduction                    0.0709    0.1715      994,169 / 994,169
+    Full CGNF                                 0.0707    0.1726      987,054 / 994,169
+
+  Findings: WEIGHTED MODULARITY MATTERS (0.0707 full vs. 0.0676 unweighted,
+  +4.6% -- the single biggest ablation gap); EDGE REDUCTION DOES NOT HELP
+  ACCURACY at this scale (0.0707 with it vs. 0.0709 without, -0.2% --
+  CGNF's weakest component by this measure, matching R1.10's finding) while
+  removing 0.7% of edges and costing more wall-clock than it saves.
+
+--------------------------------------------------------------------------------
+[R1.12] Reproducibility
+--------------------------------------------------------------------------------
+COMMENT:
+  "Provide code/configurations, preprocessing details, data splits,
+  hyperparameters, seeds, evaluation scripts, and raw results for
+  independent verification."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  The whole point of this application. scripts/app.sh start is the single
+  reproduction entrypoint; every run's full config and raw per-user-averaged
+  results are exportable via the API and saved to output/results/. Gradient
+  checks for BPR-MF and LightGCN (max abs error ~1e-11 each) and a toy-graph
+  community-detection sanity check are in backend/tests/test_models.py,
+  runnable independently of the web app.
+
+
+================================================================================
+REVIEWER 2
+================================================================================
+
+--------------------------------------------------------------------------------
+[R2.1] Novelty
+--------------------------------------------------------------------------------
+COMMENT:
+  "Clearly explain what is genuinely new in CGNF compared with recent
+  graph-based collaborative filtering methods."
+
+STATUS: PARTIALLY IMPLEMENTED
+
+APPROACH:
+  Not a manuscript rewrite, but the evidence a novelty argument needs: CGNF
+  head-to-head against LightGCN (the reviewer-named recent graph method) on
+  identical data -- CGNF beats LightGCN by 38.6% on NDCG@20 (0.0707 vs.
+  0.0510). What CGNF is actually doing differently (community-scoped
+  neighbor CF via bipartite modularity, vs. LightGCN's global embedding
+  propagation) is now a measured comparison, not an assertion.
+
+--------------------------------------------------------------------------------
+[R2.2] Superiority / Fairness
+--------------------------------------------------------------------------------
+COMMENT:
+  "Use the same data splits, preprocessing, evaluation code, candidate
+  generation, and comparable tuning for all methods."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Identical ask to R1.3 -- one split, one candidate-generation rule (full
+  remaining catalog minus train-seen items), one evaluation function, for
+  all 5 methods.
+
+--------------------------------------------------------------------------------
+[R2.3] Ablation Study
+--------------------------------------------------------------------------------
+COMMENT:
+  "Show the individual importance of dual-mode modularity, community
+  partitioning, edge reduction, and GNN components."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Duplicate of R1.11 -- see that entry for the full 4-way ablation table and
+  findings.
+
+--------------------------------------------------------------------------------
+[R2.4] Diversity Claim
+--------------------------------------------------------------------------------
+COMMENT:
+  "Current Recall/NDCG results cannot prove diversity improvement. Add
+  proper diversity metrics or limit the claim to accuracy."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Duplicate of R1.4 -- coverage/novelty/ILD computed for every method; the
+  honest finding that BPR-MF has far higher coverage than CGNF is reported,
+  not hidden.
+
+--------------------------------------------------------------------------------
+[R2.5] Statistical Validation
+--------------------------------------------------------------------------------
+COMMENT:
+  "Report results from multiple runs with different random seeds,
+  including mean +/- standard deviation/confidence intervals and
+  significance testing."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  backend/app/stats.py re-trains CGNF and the strongest baseline across N
+  seeds (default 5, paired -- same seeds for both methods), reports mean +/-
+  SD, and runs a paired t-test (always) plus a Wilcoxon signed-rank test
+  (when >=6 non-tied pairs exist).
+
+  REAL MULTI-SEED RESULT, this run (NDCG@20, seeds 0-4):
+
+    Method              Seed0    Seed1    Seed2    Seed3    Seed4    Mean +/- SD
+    ------------------  -------  -------  -------  -------  -------  -----------------
+    CGNF (proposed)       0.0707   0.0712   0.0703   0.0704   0.0716   0.0708 +/- 0.00054
+    Item-kNN                0.0628   0.0628   0.0628   0.0628   0.0628   0.0628 +/- 0.0000
+
+  Item-kNN's exact-zero standard deviation is CORRECT, not a bug:
+  cosine-similarity Item-kNN has no stochastic component, so it is expected
+  to be perfectly deterministic regardless of seed. CGNF's non-zero std
+  (0.00054) confirms its k-means-based clustering step is now genuinely
+  randomized per seed (see the bug-fix account under "Issues found
+  independently" below).
+
+  PAIRED T-TEST: t = 33.28, p = 4.86e-6 (n=5 paired seeds) -- CGNF's
+  advantage over Item-kNN is statistically significant, not a single-run
+  artifact.
+
+  WILCOXON SIGNED-RANK: not computed -- only 5 non-tied pairs; this test
+  conventionally needs >=6. Reported as unavailable rather than omitted
+  silently.
+
+--------------------------------------------------------------------------------
+[R2.6] Result Consistency
+--------------------------------------------------------------------------------
+COMMENT:
+  "Correct all mismatches between tables, figures, and text, especially
+  Recall@50 and NDCG dataset labeling."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Duplicate of R1.5-9's approach -- replaced, not arbitrated; single-dataset
+  scope (MovieLens only) structurally prevents the dataset-labeling
+  confusion from recurring.
+
+--------------------------------------------------------------------------------
+[R2.7] Generalization & Sensitivity
+--------------------------------------------------------------------------------
+COMMENT:
+  "Test different community settings and edge-reduction thresholds, report
+  dataset characteristics, and discuss limitations/failure cases."
+
+STATUS: IMPLEMENTED
+
+APPROACH:
+  Dataset characteristics (users, items, ratings, sparsity, eval-user count)
+  are reported before every run. The Sensitivity page lets H (community
+  count) and tau (edge-reduction threshold) be swept interactively -- each
+  cell re-runs community detection for exactly that setting and is cached.
+  Limitations are stated plainly in specs/spec.md section 7, not hidden: no
+  Amazon dataset, no session-based baselines, no automated hyperparameter
+  tuning.
+
+--------------------------------------------------------------------------------
+[R2.8] References & Related Work
+--------------------------------------------------------------------------------
+COMMENT:
+  "Use complete standard references and update the literature review with
+  relevant recent studies, especially from 2024 onward."
+
+STATUS: OUT OF SCOPE (manuscript-only / future work)
+
+APPROACH:
+  Literature review/reference-list work has no corresponding application
+  feature -- named explicitly as out of scope (specs/spec.md section 7)
+  rather than silently skipped.
+
+
+================================================================================
+ISSUES FOUND INDEPENDENTLY (not raised by either reviewer)
+================================================================================
+
+--------------------------------------------------------------------------------
+Found independently: no reference implementation of CGNF exists at all
+--------------------------------------------------------------------------------
+  Unlike a typical reference-code audit, there was no code to run -- only
+  the paper's equations and pseudocode, several with ambiguous or
+  OCR-garbled subscripts. The mitigation is specs/spec.md section 2 and
+  R1.1's equation-by-equation, independently-testable transcription, not a
+  guess at the authors' original implementation.
+
+--------------------------------------------------------------------------------
+Found independently: a sixth internal inconsistency beyond the five
+reviewers flagged
+--------------------------------------------------------------------------------
+  Table 3 and Table 7 give two different values for the same MovieLens
+  Recall@20 baseline figure (10.985 vs. 10.895) -- caught while tracing
+  exactly which numbers needed reproducing, not pointed out by either
+  reviewer.
+
+--------------------------------------------------------------------------------
+Found independently: standard graph/GNN libraries install cleanly here,
+unlike the sibling project's broken dependencies
+--------------------------------------------------------------------------------
+  Verified empirically: `pip install --dry-run networkx python-louvain
+  torch` succeeds (networkx-3.7, python-louvain-0.16, torch-2.14.1). The
+  decision to hand-implement CGNF's community detection and LightGCN in
+  NumPy anyway is architectural (fidelity to the paper's bespoke bipartite
+  modularity; dependency-light consistency with every other component's
+  gradient-checked design) -- stated as a choice, not an unavoidable
+  workaround. See specs/spec.md section 6.
+
+--------------------------------------------------------------------------------
+Found in this project's own first implementation (not the paper):
+community detection silently collapsed to a single cluster
+--------------------------------------------------------------------------------
+  An initial, literal reading of Eq.(15)-(17) as an alternating
+  power-iteration update (two sparse matrix multiplications per iteration)
+  was built, trained on real MovieLens-1M data, and looked plausible -- it
+  produced a modularity score and ran end-to-end without error. It was
+  only caught by this project's own multi-seed statistical-validation
+  feature (built to satisfy Reviewer 2 item 5): 5 different random seeds
+  produced BIT-IDENTICAL results, which is essentially impossible for a
+  genuinely stochastic clustering procedure. Direct investigation confirmed
+  every tested community count H in {4,8,16,32,64} collapsed to exactly
+  ONE occupied community regardless of the target H -- a textbook failure
+  mode of repeated multiplication by a positive matrix on a single
+  connected graph (it converges toward the dominant eigenvector, not H
+  distinct clusters).
+
+  FIX: replaced with bipartite spectral co-clustering (Dhillon, 2001) -- the
+  top-(H-1) singular vectors of the normalized bipartite link matrix,
+  k-means'd into H clusters. Verified fixed: every H now produces exactly H
+  non-empty communities with varied sizes (e.g. H=4 -> sizes
+  [2095, 1726, 1403, 816]), and 5 different seeds now produce genuinely
+  different (but statistically consistent) results -- CGNF's multi-seed
+  NDCG@20 has mean 0.0708, std 0.00054, vs. the earlier version's
+  impossible std of exactly 0.0.
+
+  WHY THIS IS REPORTED AT ALL: every number in this document comes from the
+  fixed version, not the broken one -- this entry exists because the same
+  honesty standard this document holds the original paper to has to apply
+  to this implementation's own mistakes, including ones that were caught
+  and fixed before anyone outside this project ever saw them.
+
+
+================================================================================
+SOURCE
+================================================================================
+Real training run: 5ab5fa5a70 (MovieLens 1M, 6,040 users, 3,883 movies,
+1,000,209 ratings, 3,563 held-out evaluation users).
+Multi-seed validation: same run id, 5 seeds (0-4), metric ndcg@20.
+
+Reproducible via: scripts/app.sh start, then POST /api/runs with the config
+recorded in output/results/run_5ab5fa5a70.json (seed=0).
+
+Full data: output/results/run_5ab5fa5a70.json,
+           output/results/multiseed_5ab5fa5a70.json
+
+See also: review-comments.docx (same content, formatted as a Word document
+          with tables), specs/reviewer-requirements.md (quick-reference
+          table only).

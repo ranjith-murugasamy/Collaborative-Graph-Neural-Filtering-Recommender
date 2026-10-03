@@ -1,0 +1,8 @@
+npm notice run cgnf-recommender-frontend@0.0.0 dev
+npm notice run vite --port 5174 --strictPort
+2:41:52 AM [vite] (client) Re-optimizing dependencies because lockfile has changed
+
+  VITE v8.3.2  ready in 257 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: use --host to expose

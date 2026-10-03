@@ -1,0 +1,61 @@
+ * Serving Flask app 'api'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5003
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [04/Oct/2026 02:28:52] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:28:52] "GET /api/runs HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:32] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:32] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:32] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:32] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:36] "GET /api/config/defaults HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:36] "GET /api/config/defaults HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:37] "GET /api/runs HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:37] "GET /api/runs HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:42] "GET /api/runs HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:42] "GET /api/runs HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:43] "GET /api/config/defaults HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:43] "GET /api/config/defaults HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:45] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:45] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:29:47] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:30:02] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:30:17] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:30:33] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:30:48] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:31:03] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:31:18] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:31:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:32:21] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:32:32] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:32:48] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:33:02] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:33:17] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:33:32] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:33:47] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:34:03] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:34:17] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:34:33] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:34:48] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:35:03] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:35:18] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:35:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:36:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:37:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:38:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:39:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:40:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:41:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:41:57] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:42:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:43:38] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:43:40] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:43:40] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:43:40] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:43:40] "GET /api/datasets HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:43:55] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:44:11] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:44:26] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:44:41] "GET /api/health HTTP/1.1" 200 -
+127.0.0.1 - - [04/Oct/2026 02:44:56] "GET /api/health HTTP/1.1" 200 -
